@@ -14,17 +14,11 @@ return [
     'roles_structure' => [
         'superadmin' => [
             'acl' => 'c,r,u,d',
-            // 'desk-number' => 'c,r,u,d',
             'locations' => 'c,r,u,d',
             'profile' => 'r,u',
             'users' => 'c,r,u,d',
             'user-device'   => 'c,r,u',
-            // 'queue-type' => 'c,r,u,d',
-            // 'queue-subtype' => 'c,r,u,d',
-            // 'queue-transaction' => 'c,r,u,d',
-            // 'queue-subtransaction' => 'c,r,u,d',
             'company' => 'c,r,u,d',
-            // 'queue-attribute' => 'c,r,u,d',
             'scheduler' => 'c,r,u,d',
             'messaging-service' => 'c,r,u,d',
             'report'    => 'r',
@@ -35,7 +29,8 @@ return [
             'inventory' => 'c,r,u,d',
             'content' => 'c,r,u,d',
             'vehicle_type' => 'c,r,u,d',
-            'location_type' => 'c,r,u,d'
+            'category' => 'c,r,u,d',
+            'product' => 'c,r,u,d'
         ],
         'admin' => [
             'locations' => 'c,r,u,d',

@@ -2,19 +2,24 @@
 
 /** @var \Laravel\Lumen\Routing\Router $router */
 
-/*
-|--------------------------------------------------------------------------
-| Application Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register all of the routes for an application.
-| It is a breeze. Simply tell Lumen the URIs it should respond to
-| and give it the Closure to call when that URI is requested.
-|
-*/
-
 $router->get('/', function () use ($router) {
     return $router->app->version();
+});
+
+$router->group(['prefix' => 'product/v1_0'], function () use ($router) {
+    // Matches "/api/product
+    $router->get('product/{id}', 'Product\ProductController@show');
+    $router->post('product/store', 'Product\ProductController@store');
+    $router->put('product/{id}', 'Product\ProductController@update');
+    $router->delete('product/{id}', 'Product\ProductController@destroy');
+    $router->post('product', 'Product\ProductController@index');
+
+    // Matches "/api/category
+    $router->get('category/{id}', 'Product\CategoryController@show');
+    $router->post('category/store', 'Product\CategoryController@store');
+    $router->put('category/{id}', 'Product\CategoryController@update');
+    $router->delete('category/{id}', 'Product\CategoryController@destroy');
+    $router->post('category', 'Product\CategoryController@index');
 });
 
 $router->group(['prefix' => 'asset/v1_0'], function () use ($router) {
