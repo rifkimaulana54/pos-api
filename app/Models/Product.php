@@ -51,4 +51,9 @@ class Product extends Model
     {
         return $this->belongsTo('App\Models\Company');
     }
+
+    public function metas()
+    {
+        return $this->hasMany('App\Models\ProductMeta');
+    }
 }

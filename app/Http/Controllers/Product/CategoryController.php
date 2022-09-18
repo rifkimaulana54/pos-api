@@ -220,7 +220,9 @@ class CategoryController extends Controller
             if(!$login->isAbleTo('update-category'))
                 return errorCustomStatus(403);
 
-            $category = Category::findOrFail($id);
+            $category = Category::find($id);
+            if(empty($category))
+                return errorCustomStatus(404, 'Category ID #'.$id.' tidak ditemukan!');
 
             $name = $request->input('category_name');
             if(!empty($name))
@@ -294,7 +296,9 @@ class CategoryController extends Controller
             if(!$login->isAbleTo('delete-category'))
                 return errorCustomStatus(403);
 
-            $category = Category::findOrFail($id);
+            $category = Category::find($id);
+            if(empty($category))
+                return errorCustomStatus(404, 'Category ID #'.$id.' tidak ditemukan!');
             
             Category::destroy($id);
 
