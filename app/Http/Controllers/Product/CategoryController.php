@@ -91,7 +91,7 @@ class CategoryController extends Controller
                         ->limit($per_page);
                 }
 
-                $categories = $categoryQ->with(['company'])->get();
+                $categories = $categoryQ->with(['products','company','parent'])->get();
 
                 if(!empty($categories))
                     $return['categories'] = $categories;
@@ -167,7 +167,7 @@ class CategoryController extends Controller
 
             \DB::commit();
 
-            $category = Category::with(['company'])->find($new_category->id);
+            $category = Category::with(['products','company','parent'])->find($new_category->id);
 
             $history = array(
                 'predicate' => 'Create {object}',
@@ -198,7 +198,7 @@ class CategoryController extends Controller
             if(!$login->isAbleTo('read-category'))
                 return errorCustomStatus(403);
 
-            $category = Category::with(['company'])->find($id);
+            $category = Category::with(['products','company','parent'])->find($id);
             if(empty($category))
                 return errorCustomStatus(400,'Category ID #'.$id.' tidak ditemukan.');
 
@@ -241,6 +241,8 @@ class CategoryController extends Controller
                 $exist_parent = Category::find($request->parent_id);
                 if(empty($exist_parent))
                     return errorCustomStatus(400,'Kategori #'.$request->parent_id.' tidak ditemukan.');
+
+                $category->parent_id = $request->parent_id;
             }
 
             if(!empty($request->description))
