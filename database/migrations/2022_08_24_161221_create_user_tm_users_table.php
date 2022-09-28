@@ -30,8 +30,9 @@ class CreateUserTmUsersTable extends Migration
             $table->bigInteger('updated_id');
             $table->string('updated_name');
             $table->timestamps();
-            $table->integer('status')->default(1);
             $table->bigInteger('company_id')->default(1);
+            $table->bigInteger('store_id')->default(1);
+            $table->integer('status')->default(1);
         });
     }
 

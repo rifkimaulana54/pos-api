@@ -76,4 +76,18 @@ $router->group(['prefix' => 'user/v1_0'], function () use ($router)
 
     // Matches "/api/users
     $router->post('lists', 'User\UserController@allUsers');
+
+    // Matches "/api/acl/store
+    $router->post('our-store/store', 'User\Store\StoreController@store');
+    $router->get('our-store/{id}', 'User\Store\StoreController@show');
+    $router->put('our-store/{id}', 'User\Store\StoreController@update');
+    $router->delete('our-store/{id}', 'User\Store\StoreController@destroy');
+    $router->post('our-store', 'User\Store\StoreController@index');
+
+    // Matches "/api/acl/company
+    $router->post('company/store', 'User\Company\CompanyController@store');
+    $router->get('company/{id}', 'User\Company\CompanyController@show');
+    $router->put('company/{id}', 'User\Company\CompanyController@update');
+    $router->delete('company/{id}', 'User\Company\CompanyController@destroy');
+    $router->post('company', 'User\Company\CompanyController@index');
 });

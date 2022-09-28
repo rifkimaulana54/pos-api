@@ -117,14 +117,19 @@ class ProductController extends Controller
             if(!$login->isAbleTo('create-product'))
                 return errorCustomStatus(403);
 
+            $checks = array(
+                'product_name',
+                'product_price',
+            );
+
+            foreach ($checks as $check) 
+            {
+                if(empty($request->$check))
+                return errorCustomStatus(400,'Param ['.$check.'] tidak boleh kosong.');
+            }
+            
             $name = $request->input('product_name');
-            if(empty($name))
-                return errorCustomStatus(400,'Nama Produk tidak boleh kosong.');
-
-            $price = $request->input('product_price');
-            if (empty($price))
-                return errorCustomStatus(400, 'Harga Produk tidak boleh kosong.');
-
+            
             $exist = Product::where('product_display_name',$name)->first();
             if(!empty($exist))
                 return errorCustomStatus(400,'Product '.$name.' sudah ada.',array('product' => $exist));
@@ -153,7 +158,7 @@ class ProductController extends Controller
             $new_product->category_id = $request->category_id;
             $new_product->product_name = Str::slug($name);
             $new_product->product_display_name = $name;
-            $new_product->product_price = $price;
+            $new_product->product_price = $request->input('product_price');
             if(!empty($request->product_description))
                 $new_product->product_description = $request->product_description;
             insert_log_user($new_product, $login);
@@ -218,7 +223,7 @@ class ProductController extends Controller
             if(!$login->isAbleTo('read-product'))
                 return errorCustomStatus(403);
 
-            $product = Product::with(['company'])->find($id);
+            $product = Product::with(['company', 'category', 'metas'])->find($id);
             if(empty($product))
                 return errorCustomStatus(400,'Product ID #'.$id.' tidak ditemukan.');
 
@@ -261,11 +266,9 @@ class ProductController extends Controller
                 $exist_category = Category::find($request->category_id);
                 if(empty($exist_category))
                     return errorCustomStatus(400,'Kategori #'.$request->category_id.' tidak ditemukan.');
+                $product->category_id = $request->category_id;
+                
             }
-
-            $price = $request->input('product_price');
-            if (empty($price))
-                return errorCustomStatus(400, 'Harga Produk tidak boleh kosong.');
 
             if(!empty($request->product_description))
                 $product->product_description = $request->product_description;
@@ -273,7 +276,10 @@ class ProductController extends Controller
             if($request->input('status') !== null) 
                 $product->status = $request->input('status');
 
-            $product->product_price = $price;
+            $price = $request->input('product_price');
+            if(!empty($price))
+                $product->product_price = $price;
+            
             $product->company_id = !empty($request->company_id) ? $request->company_id : 1;
 
             try 

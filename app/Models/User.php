@@ -100,6 +100,11 @@ class User extends Model implements
         return $this->hasMany(UserMeta::class);
     }
 
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
     public function getStatusLabelAttribute()
     {
         switch ($this->status) {

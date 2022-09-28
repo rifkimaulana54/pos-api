@@ -210,7 +210,7 @@ class UserController extends Controller
             if(!empty($per_page))
                $userQ->offset(($page*$per_page))->limit($per_page);
 
-            $users = $userQ->with(['metas','roles', 'company'])
+            $users = $userQ->with(['metas','roles', 'company', 'store'])
                            ->get();
 
             if(!empty($users))
@@ -245,7 +245,7 @@ class UserController extends Controller
          if(!$login->isAbleTo('read-users'))
                return errorCustomStatus(403);
 
-         $user = User::with(['metas','roles'])->find($id);
+         $user = User::with(['metas','roles', 'company', 'store'])->find($id);
          if(empty($user))
             return errorCustomStatus(404, 'User ID #'.$id.' tidak ditemukan');
          $user->acls = array_column(json_decode($user->allPermissions()), 'name');
@@ -314,18 +314,6 @@ class UserController extends Controller
             $user->email = $email;
             $user->phone = $phone;
          }
-         
-         // if(!empty($location_ids = $request->location_ids))
-         // {
-         //    $location_ids = maybe_unserialize($location_ids);
-         //    $locations = Location::whereIn('id', $location_ids)->where('status', 1)->get()->toArray();
-         //    $locations = array_column($locations, 'id');
-         //    foreach ($location_ids as $id) 
-         //       if(!in_array($id, $locations))
-         //          return errorCustomStatus(400,'Location #'.$id.' tidak ditemukan.');
-         // }
-         // elseif(isset($request->location_id))
-         //    $location_ids = [];
 
          if(!empty($request->company_id))
          {
@@ -345,8 +333,9 @@ class UserController extends Controller
 
          if(!empty($request->input('fullname'))) 
             $user->fullname = $request->input('fullname');
-         // if(!empty($request->old_customer_code)) 
-         //     $user->old_customer_code = $request->old_customer_code;
+         
+         if(!empty($request->store_id))
+            $user->store_id = $request->store_id;
 
          if(!empty($request->type))
             $user->type = $request->type;

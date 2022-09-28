@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\Location;
 use App\Models\Role;
+use App\Models\Store;
 use Illuminate\Http\Request;
 
 use App\Models\User;
@@ -49,19 +50,23 @@ class AuthController extends Controller
          // if(empty($request->roles))
          //     $check_user[] = 'phone';
 
+         // dd($request->all());
          foreach ($check_user as $check) 
          {
             if(empty($request->$check))
                return errorCustomStatus(400,'Param ['.$check.'] tidak boleh kosong.');
          }
-         // if(!empty($location_ids = $request->location_ids))
+
+         // if(!empty($store_ids = $request->store_ids))
          // {
-         //    $location_ids = maybe_unserialize($location_ids);
-         //    $locations = Location::whereIn('id', $location_ids)->where('status', 1)->get()->toArray();
-         //    $locations = array_column($locations, 'id');
-         //    foreach ($location_ids as $id) 
-         //       if(!in_array($id, $locations))
-         //          return errorCustomStatus(400,'Warehouse #'.$id.' tidak ditemukan.');
+         //       $stores = Store::whereIn('id', $store_ids)->where('status', 1)->get()->toArray();
+         //       $stores = array_column($stores, 'id');
+         //       if(!empty($stores))
+         //       {
+         //          foreach ($request->store_ids as $id) 
+         //             if(!in_array($id, $stores))
+         //                   return errorCustomStatus(400,'Warehouse #'.$id.' tidak ditemukan.');
+         //       }
          // }
 
          if(!empty($request->password))
@@ -157,6 +162,8 @@ class AuthController extends Controller
             $user->email = $request->email;
          if(!empty($request->phone))
             $user->phone = $request->phone;
+         if(!empty($request->store_id))
+            $user->store_id = $request->store_id;
 
          $user->password = app('hash')->make($plainPassword);
          if(!empty($request->type))
@@ -185,6 +192,10 @@ class AuthController extends Controller
             Log::error($e->getMessage().': '.$e->getFile().' Line: '.$e->getLine());
             return errorQuery($message,$developer);
          }
+
+         // if (!empty($store_ids))
+         //    $user->stores()->sync($store_ids);
+            
 
          if(!empty($role = $request->input('role')))
          {
