@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Store extends Model
+class OrderMapping extends Model
 {
-   protected $table = 'user_tm_stores';
+   protected $table = 'order_tr_mapping_orders';
 
    protected $appends = ['status_label'];
    protected $searchable = [
-      'store_name',
-      'store_address',
-      'no_telepone',
+      'order_qty',
+      'subtotal',
+      'total_order',
       'created_at',
       'updated_at',
       'created_name',
@@ -41,8 +41,13 @@ class Store extends Model
       }
    }
 
-   public function metas()
+   public function order()
    {
-      return $this->hasMany('App\Models\StoreMeta');
+      return $this->belongsTo(Order::class);
+   }
+
+   public function product()
+   {
+      return $this->belongsTo(Product::class);
    }
 }

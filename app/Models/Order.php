@@ -4,15 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Store extends Model
+class Order extends Model
 {
-   protected $table = 'user_tm_stores';
+   protected $table = 'order_tm_orders';
 
    protected $appends = ['status_label'];
    protected $searchable = [
-      'store_name',
-      'store_address',
-      'no_telepone',
+      'order_code',
+      'customer_name',
+      'total_order',
       'created_at',
       'updated_at',
       'created_name',
@@ -35,14 +35,31 @@ class Store extends Model
          case 1:
             return 'Active';
             break;
+         case 2:
+            return 'Waiting List';
+            break;
+         case 3:
+            return 'In Progress';
+            break;
+         case 4:
+            return 'Completed';
+            break;
+         case 5:
+            return 'Selected';
+            break;
          default:
             return 'Inactive';
             break;
       }
    }
 
-   public function metas()
+   public function mapping()
    {
-      return $this->hasMany('App\Models\StoreMeta');
+      return $this->hasMany('App\Models\OrderMapping');
+   }
+
+   public function store()
+   {
+      return $this->belongsTo(Store::class);
    }
 }

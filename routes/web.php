@@ -6,6 +6,15 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+$router->group(['prefix' => 'order/v1_0'], function () use ($router) {
+    // Matches "/api/order
+    $router->get('order/{id}', 'Order\OrderController@show');
+    $router->post('order/store', 'Order\OrderController@store');
+    $router->put('order/{id}', 'Order\OrderController@update');
+    $router->delete('order/{id}', 'Order\OrderController@destroy');
+    $router->post('order', 'Order\OrderController@index');
+});
+
 $router->group(['prefix' => 'product/v1_0'], function () use ($router) {
     // Matches "/api/product
     $router->get('product/{id}', 'Product\ProductController@show');
