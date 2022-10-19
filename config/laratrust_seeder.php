@@ -41,13 +41,6 @@ return [
         ],
         'kasir' => [
             'profile' => 'r,u',
-            'user-device'   => 'c,r,u',
-            // 'desk-number' => 'c,r,u,d',
-            'locations' => 'c,r,u',
-            // 'queue-type' => 'r',
-            // 'app-service' => 'r',
-            // 'queue-transaction' => 'c,r,u',
-            // 'queue-subtransaction' => 'c,r,u',
             'report'    => 'r',
             'vehicle' => 'c,r,u,d',
             'vehicle_type' => 'r',
@@ -57,6 +50,8 @@ return [
             'inventory' => 'c,r,u',
             'users' => 'c,r,u',
             'company_admin' => 'c,r,u,d',
+            'category' => 'r',
+            'product' => 'r'
         ]
     ],
 

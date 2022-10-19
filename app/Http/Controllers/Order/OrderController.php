@@ -207,6 +207,7 @@ class OrderController extends Controller
                         $new_item->order_id = !empty($cek) ? $cek->id : $new_order->id;
                         $new_item->product_id = !empty($item['product_id']) ? $item['product_id'] : '';
                         $new_item->order_qty = !empty($item['order_qty']) ? $item['order_qty'] : '';
+                        $new_item->default_price = !empty($item['default_price']) ? $item['default_price'] : '';
                         $new_item->order_subtotal = !empty($item['order_subtotal']) ? $item['order_subtotal'] : '';
 
                         insert_log_user($new_item, $login);

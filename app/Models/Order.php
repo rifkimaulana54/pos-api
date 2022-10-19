@@ -44,8 +44,6 @@ class Order extends Model
          case 4:
             return 'Completed';
             break;
-         case 5:
-            return 'Selected';
             break;
          default:
             return 'Inactive';

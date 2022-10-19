@@ -12,6 +12,7 @@ class Product extends Model
     protected $searchable = [
         'id',
         'product_name',
+        'product_display_name',
         'product_description',
         'product_price'
     ];

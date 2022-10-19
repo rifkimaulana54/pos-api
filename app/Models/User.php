@@ -79,6 +79,8 @@ class User extends Model implements
             'rl'    => array_column(json_decode($this->roles), 'name'),
         ];
 
+        if (!empty($this->store_id))
+            $return['st'] = $this->store_id;
         if (!empty($this->email))
             $return['ue'] = $this->email;
 
