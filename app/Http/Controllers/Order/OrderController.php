@@ -95,7 +95,11 @@ class OrderController extends Controller
                         ->limit($per_page);
                 }
 
-                $orders = $orderQ->with(['mapping','store'])->get();
+                $orders = $orderQ->with([
+                    'mapping',
+                    'mapping.product',
+                    'store'
+                    ])->get();
 
                 if(!empty($orders))
                     $return['orders'] = $orders;

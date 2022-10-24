@@ -13,6 +13,7 @@ class Order extends Model
       'order_code',
       'customer_name',
       'total_order',
+      'store_id',
       'created_at',
       'updated_at',
       'created_name',
@@ -43,7 +44,6 @@ class Order extends Model
             break;
          case 4:
             return 'Completed';
-            break;
             break;
          default:
             return 'Inactive';
