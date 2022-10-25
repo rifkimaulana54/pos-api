@@ -16,7 +16,7 @@ use App\Models\ProductMeta;
 class ProductController extends Controller
 {
     /**
-     * Instantiate a new UserController instance.
+     * Instantiate a new ProductController instance.
      *
      * @return void
      */
@@ -374,6 +374,102 @@ class ProductController extends Controller
         catch (\Exception $e) 
         {
             return errorCustomStatus(404,'Product tidak ditemukan!');
+        }
+    }
+
+    public function import(Request $request)
+    {
+        try {
+            $login = Auth::user();
+            if(!$login->isAbleTo('create-product'))
+                return errorCustomStatus(403);
+
+            if(empty($request->products))
+                return errorCustomStatus(400,'Param [products] tidak boleh kosong.');
+
+            $products_decode = json_decode($request->products);
+            
+            $exist_products = Product::whereIn('product_display_name', array_column($products_decode, 'product_name'))->get()->toArray();
+            $exist_product_name = array_column($exist_products, 'product_display_name', 'id');
+            // $product_category = Category::get()->toArray();
+            // $product_category = array_column($product_category, 'category_display_name');
+            $return['error'] = array();
+            $e = 1;
+
+            foreach ($products_decode as $product_dec) 
+            {
+                if(in_array($product_dec->product_name, $exist_product_name))
+                {
+                    $return['error'][$e][] = "Nama produk sudah ada di database";
+                    $e++;
+                    continue;
+                }
+                
+                if(empty($product_dec->product_price))
+                    return errorCustomStatus(400,'Param [product_price] tidak boleh kosong.');
+
+                \DB::beginTransaction();
+                $product = new Product;
+                $product->category_id = $product_dec->category_id;
+                $product->product_display_name = $product_dec->product_name;
+                $product->product_name = Str::slug($product_dec->product_name);
+                $product->product_price = $product_dec->product_price;
+                if(!empty($product_dec->product_description))
+                    $product->product_description = $product_dec->product_description;
+
+                $product->status = 1;
+                if(!empty($request->company_id)) $product->company_id = $request->company_id;
+                insert_log_user($product, $login);
+                
+                try
+                {
+                    $product->save();
+                }
+                catch(\Exception $i)
+                {
+                    \DB::rollback();
+                    $return['error'][$e][] = "Product Gagal disimpan";
+                }
+                
+
+                if(!empty($product_dec->meta))
+                {
+                    foreach ($product_dec->meta as $meta_key => $meta_value) 
+                    {
+                        $meta = new ProductMeta;
+                        $meta->product_id = $product->id;
+                        $meta->meta_key = $meta_key;
+                        $meta->meta_value = $meta_value;
+                        try
+                        {
+                            $meta->save();
+                        }
+                        catch(\Exception $i)
+                        {
+                            \DB::rollback();
+                            $return['error'][$e][] = "Product Gagal disimpan";
+                        }
+                    }
+                }
+                \DB::commit();
+                $e++;
+            }
+
+            if(!empty($return['error']) && $e == count($return['error'])+1)
+                $msg = 'Semua data gagal diimport.';
+            elseif(!empty($return['error']))
+                $msg = 'Sebagian data gagal diimport.';
+            else
+                $msg = 'Semua data berhasil diimport.';
+
+            return responses($return,array('message' => $msg));
+
+        } 
+        catch (\Exception $e) 
+        {
+            $message = $e->getMessage();
+            $developer = $e->getFile().' Line: '.$e->getLine();
+            return errorQuery($message,$developer);
         }
     }
 }

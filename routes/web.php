@@ -17,6 +17,7 @@ $router->group(['prefix' => 'order/v1_0'], function () use ($router) {
 
 $router->group(['prefix' => 'product/v1_0'], function () use ($router) {
     // Matches "/api/product
+    $router->post('product/import', 'Product\ProductController@import');
     $router->get('product/{id}', 'Product\ProductController@show');
     $router->post('product/store', 'Product\ProductController@store');
     $router->put('product/{id}', 'Product\ProductController@update');
