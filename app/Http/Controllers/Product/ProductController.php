@@ -306,7 +306,8 @@ class ProductController extends Controller
                         $meta = new ProductMeta;
                         $meta->product_id = $product->id;
                         $meta->meta_key = $meta_key;
-                        insert_log_user($meta, $login);
+                        $meta->meta_value = $meta_value;
+                        // insert_log_user($meta, $login);
                     }
                     else
                         // insert_log_user($meta, $login, 1);

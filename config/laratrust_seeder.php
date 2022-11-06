@@ -21,7 +21,14 @@ return [
             'orders' => 'c,r,u,d',
             'store' => 'c,r,u,d',
             'category' => 'c,r,u,d',
-            'product' => 'c,r,u,d'
+            'product' => 'c,r,u,d',
+            'cms-order' => 'r',
+            'cms-user' => 'r',
+            'cms-acl-role' => 'r',
+            'cms-store' => 'r',
+            'cms-company' => 'r',
+            'cms-category' => 'r',
+            'cms-product' => 'r'
         ],
         'admin' => [
             'acl' => 'c,r,u,d',
