@@ -120,9 +120,7 @@ class OrderController extends Controller
         try
         {
             $login = Auth::user();
-            
             // dd($request->all());
-
             if(!$login->isAbleTo('create-orders'))
                 return errorCustomStatus(403);
 
@@ -248,7 +246,7 @@ class OrderController extends Controller
             // dd($jurnal_order->toArray());
             insertLogAction($login, $history, 'create_order', 'orders');
 
-            return responses(array('order' => $order),array('message' => 'Order '. $new_order->order_code.' berhasil dibuat.'));
+            return responses(array('order' => $order),array('message' => 'Order name #'. $new_order->customer_name.' berhasil dibuat.'));
         }
         catch(\Exception $e)
         {
@@ -295,81 +293,118 @@ class OrderController extends Controller
 
             $order = Order::find($id);
             if(empty($order))
-                return errorCustomStatus(404, 'Order ID #'.$id.' tidak ditemukan!');
+                return errorCustomStatus(404, 'Order id #'.$id.' tidak ditemukan!');
 
-            $name = $request->input('order_code');
-            if(!empty($name))
-            {
-                // return errorCustomStatus(400,'Nama Kategori tidak boleh kosong.');
-                $exist = Order::where('order_code',$name)->where('id','!=',$id)->where('company_id', $order->company_id)->first();
-                if(!empty($exist))
-                    return errorCustomStatus(400,'Kategori '.$name.' sudah ada.',array('order' => $exist));
+            \DB::beginTransaction();
 
-                $order->order_code = !empty($request->slug) ? $request->slug : Str::slug($name);
-                $order->order_display_name = $name;
-            }
-
-            if(!empty($request->category_id))
-            {
-                $exist_category = Category::find($request->category_id);
-                if(empty($exist_category))
-                    return errorCustomStatus(400,'Kategori #'.$request->category_id.' tidak ditemukan.');
-                $order->category_id = $request->category_id;
-                
-            }
-
-            if(!empty($request->order_description))
-                $order->order_description = $request->order_description;
-        
-            if($request->input('status') !== null) 
-                $order->status = $request->input('status');
-
-            $price = $request->input('order_price');
-            if(!empty($price))
-                $order->order_price = $price;
-            
+            if(!empty($request->customer_name))
+                $order->customer_name = $request->customer_name;
+            if(!empty($request->total_order))
+                $order->total_order = $request->total_order;
+            $order->status = !empty($request->status) ? $request->status : 2;
             $order->company_id = !empty($request->company_id) ? $request->company_id : 1;
 
-            try 
+            insert_log_user($order, $login, 1);
+
+            try
             {
                 $order->save();
-            } 
-            catch (\Exception $e) 
+            }
+            catch (\Exception $e)
             {
                 \DB::rollback();
                 $message = $e->getMessage();
                 $developer = $e->getFile().' Line: '.$e->getLine();
                 Log::error($e->getMessage().': '.$e->getFile().' Line: '.$e->getLine());
-                return errorQuery($message,$developer);
+                return errorQuery($message, $developer);
             }
 
-            if(!empty($metas = $request->meta))
+            if(!empty($request->items))
             {
-                foreach($metas as $meta_key => $meta_value)
-                {
-                    $meta = OrderMeta::where('meta_key',$meta_key)
-                            ->where('order_id',$order->id)->first();
-                    if(empty($meta))
-                    {
-                        $meta = new OrderMeta;
-                        $meta->order_id = $order->id;
-                        $meta->meta_key = $meta_key;
-                        insert_log_user($meta, $login);
-                    }
-                    else
-                        // insert_log_user($meta, $login, 1);
+                $items = maybe_unserialize($request->items);
 
-                    $meta->meta_value = $meta_value;
-                    $meta->save();
+                if(!empty($items))
+                {
+                    $existing_items_ids = OrderMapping::where('order_id', $order->id)
+                        ->pluck('id')->toArray();
+
+                    $new_ids = [];
+                    foreach ($items as $item)
+                    {
+                        if(empty($item['id']))
+                        {
+                            $order_item = new OrderMapping;
+                            $order_item->order_id = $order->id;
+
+                            insert_log_user($order_item, $login);
+                        }
+                        else
+                        {
+                            $order_item = OrderMapping::find($item['id']);
+                            if(empty($order_item))
+                            {
+                                $order_item = new OrderMapping;
+                                $order_item->order_id = $order->id;
+                                insert_log_user($order_item, $login);
+                            }
+                            else
+                                insert_log_user($order_item, $login, 1);
+                        }
+
+                        $order_item->product_id = !empty($item['product_id']) ? $item['product_id'] : '';
+                        $order_item->order_qty = !empty($item['order_qty']) ? $item['order_qty'] : '';
+                        $order_item->default_price = !empty($item['default_price']) ? $item['default_price'] : '';
+                        $order_item->order_subtotal = !empty($item['order_subtotal']) ? $item['order_subtotal'] : '';
+
+                        try
+                        {
+                            $order_item->save();
+                        }
+                        catch (\Exception $e)
+                        {
+                            \DB::rollback();
+                            $message = $e->getMessage();
+                            $developer = $e->getFile().' Line: '.$e->getLine();
+                            Log::error($e->getMessage().': '.$e->getFile().' Line: '.$e->getLine());
+                            return errorQuery($message,$developer);
+                        }
+
+                        $new_ids[] = $order_item->id;
+                    }
+
+                    if(!empty($existing_items_ids))
+                    {
+                        $delete_items = [];
+
+                        foreach ($existing_items_ids as $exist_id) {
+                            if(!in_array($exist_id, $new_ids))
+                                $delete_items[] = $exist_id;
+                        }
+
+                        if(!empty($delete_items))
+                        {
+                            try
+                            {
+                                OrderMapping::destroy($delete_items);
+                            }
+                            catch(\Exception $e)
+                            {
+                                \DB::rollback();
+                                $message = $e->getMessage();
+                                $developer = $e->getFile().' Line: '.$e->getLine();
+                                Log::error($e->getMessage().': '.$e->getFile().' Line: '.$e->getLine());
+                                return errorQuery($message,$developer);
+                            }
+                        }
+                    }
                 }
             }
 
             \DB::commit();
             $order = Order::with([
-                'company',
-                'category',
-                'metas'
-            ])->find($id);
+                        'mapping', 
+                        'store'
+                    ])->find($id);
 
             $history = array(
                 'predicate' => 'Update {object}',
@@ -380,7 +415,7 @@ class OrderController extends Controller
             );
             insertLogAction($login, $history, 'update_order', 'orders');
             
-            return responses(['order' => $order], ['message' => 'Edit Order berhasil!']);
+            return responses(['order' => $order], ['message' => 'Order name #'.$order->customer_name.' berhasil diedit!']);
 
         }
         catch (\Exception $e)
