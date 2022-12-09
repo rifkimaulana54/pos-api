@@ -36,7 +36,7 @@ return [
             'users' => 'c,r,u,d',
             'company' => 'c,r,u,d',
             'report'    => 'r',
-            'orders' => 'r',
+            'orders' => 'c,r,u,d',
             'store' => 'c,r,u,d',
             'category' => 'c,r,u,d',
             'product' => 'c,r,u,d',
