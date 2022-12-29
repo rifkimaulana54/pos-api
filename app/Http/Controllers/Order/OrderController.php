@@ -53,6 +53,8 @@ class OrderController extends Controller
             $date_filters = (!empty($request->input('date_filter'))) ? json_decode($request->input('date_filter'), true) : null;
             $sort_by = !empty($request->input('sort_by')) ? $request->input('sort_by') : 'created_at';
             $sort = !empty($request->input('sort')) ? $request->input('sort') : 'desc';
+            // last untuk menampilkan histori di order-list
+            $take = !empty($request->input('take')) ? $request->input('take') : '';
 
             $orderQ = Order::select('*');
 
@@ -87,7 +89,10 @@ class OrderController extends Controller
 
             if(!empty($return['total_records']))
             {
-                $orderQ->orderBy($sort_by,$sort);
+                if(!empty($take))
+                    $orderQ->orderBy('updated_at', 'desc');
+                else
+                    $orderQ->orderBy($sort_by,$sort);
 
                 if(!empty($per_page))
                 {
@@ -95,11 +100,22 @@ class OrderController extends Controller
                         ->limit($per_page);
                 }
 
-                $orders = $orderQ->with([
-                    'mapping',
-                    'mapping.product',
-                    'store'
-                    ])->get();
+                if(!empty($take))
+                {
+                    $orders = $orderQ->with([
+                        'mapping',
+                        'mapping.product',
+                        'store'
+                    ])->take(30)->get();
+                } 
+                else 
+                {
+                    $orders = $orderQ->with([
+                        'mapping',
+                        'mapping.product',
+                        'store'
+                        ])->get();
+                }
 
                 if(!empty($orders))
                     $return['orders'] = $orders;
@@ -457,6 +473,122 @@ class OrderController extends Controller
         catch (\Exception $e) 
         {
             return errorCustomStatus(404,'Order tidak ditemukan!');
+        }
+    }
+
+    public function filter(Request $request)
+    {
+    	try
+        {   
+            $login = Auth::user();
+            if(!$login->isAbleTo('read-orders'))
+                return errorCustomStatus(403);
+
+            $return = array(
+                'total_records' => 0,
+                'orders' => null
+            );
+
+            $OrderModel = new Order;
+            $searchables = $OrderModel->getSearchable();
+
+            $page = !empty($request->input('page')) ? ($request->input('page')-1) : 0;
+            $per_page = !empty($request->input('per_page')) ? $request->input('per_page') : null;
+            $keyword = !empty($request->input('keyword')) ? $request->input('keyword') : null;
+            $filters = !empty($request->input('filter')) ? json_decode($request->input('filter')) : null;
+            $date_filters = (!empty($request->input('date_filter'))) ? json_decode($request->input('date_filter'), true) : null;
+            $sort_by = !empty($request->input('sort_by')) ? $request->input('sort_by') : 'created_at';
+            $sort = !empty($request->input('sort')) ? $request->input('sort') : 'desc';
+            $group_by = !empty($request->input('group_by')) ? maybe_unserialize($request->input('group_by')) : 'updated_at';
+
+            $rawQ = ' 
+                sum(`total_order`) as `total_income_time`,
+                `created_id`,
+                `created_name`';
+
+            switch ($group_by) 
+            {
+                case 'order_time':
+                    $rawQ .= ', DATE_FORMAT(`updated_at`,"%H") as `order_time`';
+                break;
+                
+                default:
+                    $rawQ .= ', DATE_FORMAT(`updated_at`,"%Y-%m-%d") as `order_date`';
+                break;
+            }
+
+            $orderQ = Order::select(\DB::Raw($rawQ));
+            // $orderQ = Order::select('*');
+
+            if(!empty($filters))
+            {
+                foreach($filters as $where => $in)
+                    if(is_array($in))
+                        $orderQ->whereIn($where,$in);
+                    else
+                        $orderQ->where($where,$in);
+            }
+
+            if(!empty($keyword))
+            {
+                $orderQ->where(function($query) use ($keyword, $searchables){
+                    foreach($searchables as $src){
+                        $query->orWhere($src, 'LIKE', '%'.$keyword.'%');
+                    } 
+                });
+            }
+
+            if(!empty($date_filters))
+            {
+                foreach($date_filters as $key => $date)
+                {
+                    if(!empty($date['start']) && !empty($date['end']))
+                        $orderQ->whereBetween($key,[$date['start'], $date['end']]);
+                }
+            }
+
+            $return['total_records'] = $orderQ->count();
+            if (!empty($return['total_records'])) 
+            {
+                
+                $ordersQ = clone $orderQ;
+                // \DB::connection()->enableQueryLog();
+                $return['filters']['orders'] = $ordersQ->count();
+
+                $waitingListQ = clone $orderQ;
+                // \DB::connection()->enableQueryLog();
+                $return['filters']['order_waiting_lists'] = $waitingListQ->where('status',2)
+                            ->count();
+
+                $incomeQ = clone $orderQ;
+                // \DB::connection()->enableQueryLog();
+                $income = $incomeQ->where('status', 4)->get();
+                $return['filters']['income'] = $income[0]->total_income_time;
+
+                if(!empty($group_by))
+                {
+                    $orderQ->where('status', 4)->groupBy('order_date');
+                }
+
+                $orders = $orderQ->get();
+                // dd(\DB::getQueryLog());    
+
+                if(!empty($orders))
+                {
+                    // foreach($orders as $transaction)
+                    //    $this->setTrAttribute($transaction);
+
+                    $return['orders'] = $orders;
+                }
+            }
+
+            return responses($return);
+        }
+        catch(\Exception $e)
+        {
+            $message = $e->getMessage();
+            $developer = $e->getFile().' Line: '.$e->getLine();
+            return errorQuery($message,$developer);
         }
     }
 }

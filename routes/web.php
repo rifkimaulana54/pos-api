@@ -8,6 +8,7 @@ $router->get('/', function () use ($router) {
 
 $router->group(['prefix' => 'order/v1_0'], function () use ($router) {
     // Matches "/api/order
+    $router->post('order/filter', 'Order\OrderController@filter');
     $router->get('order/{id}', 'Order\OrderController@show');
     $router->post('order/store', 'Order\OrderController@store');
     $router->put('order/{id}', 'Order\OrderController@update');
