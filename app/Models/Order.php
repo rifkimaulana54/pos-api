@@ -14,6 +14,7 @@ class Order extends Model
       'customer_name',
       'total_order',
       'store_id',
+      'order_cash',
       'created_at',
       'updated_at',
       'created_name',

@@ -187,11 +187,13 @@ class OrderController extends Controller
 
             $new_order = new Order;
             $new_order->company_id = $company_id;
-            $new_order->order_code = 'CO/' . date('y/m/', strtotime($transaction_date)) . str_pad($order_number, 4, '0', STR_PAD_LEFT);
+            $new_order->order_code = 'CO/' . date('y/m/d/', strtotime($transaction_date)) . str_pad($order_number, 4, '0', STR_PAD_LEFT);
             if(!empty($request->customer_name))
                 $new_order->customer_name = $request->customer_name;
             if (!empty($request->total_order))
                 $new_order->total_order = $request->total_order;
+            if(!empty($request->order_cash))
+                $new_order->order_cash = $request->order_cash;
             $new_order->order_number = !empty($last_order->order_number) ? ($last_order->order_number + 1) : 1;
             $new_order->store_id = $login->store_id;
             $new_order->status = $request->status;
@@ -317,6 +319,8 @@ class OrderController extends Controller
                 $order->customer_name = $request->customer_name;
             if(!empty($request->total_order))
                 $order->total_order = $request->total_order;
+            if(!empty($request->order_cash))
+            $order->order_cash = $request->order_cash;
             $order->status = !empty($request->status) ? $request->status : 2;
             $order->company_id = !empty($request->company_id) ? $request->company_id : 1;
 
